@@ -330,8 +330,18 @@ class GroqLLM(LLM):
         return "groq"
 
 class DatabaseManager:
-    def __init__(self, db_path: str = "/app/data/krishi_mitra.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            # Create data directory in current working directory if doesn't exist
+            data_dir = os.path.join(os.getcwd(), "data")
+            os.makedirs(data_dir, exist_ok=True)
+            self.db_path = os.path.join(data_dir, "krishi_mitra.db")
+        else:
+            # Ensure parent directory exists
+            parent_dir = os.path.dirname(db_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            self.db_path = db_path
         self.init_database()
         
     def init_database(self):
@@ -456,27 +466,46 @@ class DatabaseManager:
         } for r in reversed(results)]  # Reverse to get chronological order
 
 class VectorMemoryManager:
-    def __init__(self, persist_directory: str = "/app/chroma_db"):
+    # def __init__(self, persist_directory: str = None):
+    #     """Initialize ChromaDB for vector-based memory"""
+    #     if persist_directory is None:
+    #         self.persist_directory = os.path.join(os.getcwd(), "chroma_db")
+    #     else:
+    #         self.persist_directory = persist_directory
+            
+    #     os.makedirs(self.persist_directory, exist_ok=True)
+        
+    #     # Initialize ChromaDB
+    #     self.chroma_client = chromadb.PersistentClient(path=persist_directory)
+        
+    #     # Create collections
+    #     self.chat_collection = self.chroma_client.get_or_create_collection(
+    #         name="chat_memory",
+    #         metadata={"description": "Chat conversation memory"}
+    #     )
+        
+    #     self.knowledge_collection = self.chroma_client.get_or_create_collection(
+    #         name="farming_knowledge",
+    #         metadata={"description": "Farming knowledge base"}
+    #     )
+        
+    #     # Initialize farming knowledge base
+    #     self.initialize_knowledge_base()
+
+
+    def __init__(self, persist_directory: str = None):
         """Initialize ChromaDB for vector-based memory"""
-        self.persist_directory = persist_directory
-        os.makedirs(persist_directory, exist_ok=True)
+        if persist_directory is None:
+            self.persist_directory = os.path.join(os.getcwd(), "chroma_db")
+        else:
+            self.persist_directory = persist_directory
+            
+        os.makedirs(self.persist_directory, exist_ok=True)
         
-        # Initialize ChromaDB
-        self.chroma_client = chromadb.PersistentClient(path=persist_directory)
+        # Initialize ChromaDB - FIX: use self.persist_directory
+        self.chroma_client = chromadb.PersistentClient(path=self.persist_directory)
         
-        # Create collections
-        self.chat_collection = self.chroma_client.get_or_create_collection(
-            name="chat_memory",
-            metadata={"description": "Chat conversation memory"}
-        )
-        
-        self.knowledge_collection = self.chroma_client.get_or_create_collection(
-            name="farming_knowledge",
-            metadata={"description": "Farming knowledge base"}
-        )
-        
-        # Initialize farming knowledge base
-        self.initialize_knowledge_base()
+        # Rest of the code remains the same...
     
     def initialize_knowledge_base(self):
         """Initialize basic farming knowledge base"""
@@ -1082,6 +1111,15 @@ def create_interface():
         )
     
     return app
+
+def create_krishi_app():
+    """Factory function to create KrishiMitra instance"""
+    return KrishiMitra()
+
+# 5. Modify create_interface function to accept an optional app instance:
+def create_interface(app_instance=None):
+    if app_instance is None:
+        app_instance = create_krishi_app()
 
 # # Launch the application
 # if __name__ == "__main__":

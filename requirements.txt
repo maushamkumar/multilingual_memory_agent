@@ -1,0 +1,6 @@
+gradio
+groq
+chromadb
+langchain
+langchain-community
+requests
